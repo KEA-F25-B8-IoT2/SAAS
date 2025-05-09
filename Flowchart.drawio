@@ -515,7 +515,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="6zXWYV9yaJjv3OfmpuYb" name="Hjemmeside">
-    <mxGraphModel dx="1443" dy="722" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1371" dy="686" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -650,8 +650,8 @@
         <mxCell id="ofPpCEuGHstg8CBs-g8P-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;labelBackgroundColor=none;strokeColor=#457B9D;fontColor=default;" parent="1" source="ofPpCEuGHstg8CBs-g8P-7" target="ofPpCEuGHstg8CBs-g8P-28" edge="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="534" y="200" />
-              <mxPoint x="483" y="200" />
+              <mxPoint x="534" y="190" />
+              <mxPoint x="483" y="190" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -690,8 +690,8 @@
             <Array as="points">
               <mxPoint x="663" y="627" />
               <mxPoint x="570" y="627" />
-              <mxPoint x="570" y="200" />
-              <mxPoint x="663" y="200" />
+              <mxPoint x="570" y="190" />
+              <mxPoint x="663" y="190" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -734,8 +734,13 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="-6xPs_3-QPRfp1DDlkZH-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;fillColor=#bac8d3;strokeColor=light-dark(#23445d, #6190b2);" edge="1" parent="1" source="ofPpCEuGHstg8CBs-g8P-7" target="ofPpCEuGHstg8CBs-g8P-46">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="-6xPs_3-QPRfp1DDlkZH-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;fillColor=#bac8d3;strokeColor=light-dark(#23445d, #6190b2);" parent="1" source="ofPpCEuGHstg8CBs-g8P-7" target="ofPpCEuGHstg8CBs-g8P-46" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="599" y="180" />
+              <mxPoint x="843" y="180" />
+            </Array>
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
