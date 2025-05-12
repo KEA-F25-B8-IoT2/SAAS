@@ -4,10 +4,10 @@ to ensure a similar and streamlined construction.
 """
 
 ##### IMPORTS
-import smbus3
-import gpiozero
+import smbus3 # https://pypi.org/project/smbus3/
+import gpiozero # https://gpiozero.readthedocs.io/en/stable/index.html 
 import threading
-import ultralytics
+import ultralytics # https://docs.ultralytics.com/guides/streamlit-live-inference/ 
 
 from matplotlib.figure import Figure
 from picamera2 import Picamera2
