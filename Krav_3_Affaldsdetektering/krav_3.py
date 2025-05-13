@@ -1,18 +1,26 @@
-import cv2
+from time import sleep
 from picamera2 import Picamera2, Preview
 from ultralytics import YOLO
-from datetime import datetime
 
-# Funktionalitet til at tage billede.
-# Blot til at sikre at kamera dur.
-def take_picture():
-    date_time = datetime.now()
-    datetime_img = f"{date_time.strftime('%d-%m-%Y-%H:%M:%S')}.jpg"
-    picam = Picamera2()
-    config = picam.create_preview_configuration(main={"size": (1080, 1080)}) #Max resolution = 4608x2592
-    picam.configure(config)
-    picam.start()
-    picam.capture_file(f"img/{datetime_img}")
-    picam.close()
+# https://docs.ultralytics.com/guides/raspberry-pi/#test-the-camera
+## Inference with Camera
+### Method 1
+####Initialize the Picamera2
+picam2 = Picamera2()
+picam2.preview_configuration.main.format = "RGB888"
+picam2.start()
 
-take_picture()
+# Load the default YOLOv11 model
+model = YOLO("yolo11n.pt")
+
+while True:
+    try:
+        frame=picam2.capture_array()
+        results=model.predict(frame, conf=0.2, iou=0.3)
+        r=results[0]
+        s=r.summary()
+        sleep(0.5)
+    except Exception as e:
+        print(e)
+    except KeyboardInterrupt:
+        break
