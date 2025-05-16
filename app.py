@@ -73,7 +73,7 @@ arm_default_position=True # "unobstructing" default position
 ##### CONFIGURATIONS
 class step_motor(object):
 	def __init__(self, pin_1, pin_2, pin_3, pin_4):
-		"""Initialize stepper motor. Just input the 4 pins."""
+		"""Initialize stepper motor. Input the 4 pins."""
 		self.IN1 = OutputDevice(pin_1)
 		self.IN2 = OutputDevice(pin_2)
 		self.IN3 = OutputDevice(pin_3)
@@ -89,7 +89,7 @@ class step_motor(object):
 				sleep(delay)
 
 	def arm_off(self):
-		for control_pin in CONTROL_PINS:
+		for control_pin in self.CONTROL_PINS:
 			control_pin.off()
 
 	def arm_degrees(self,desired_degrees):
@@ -101,6 +101,15 @@ class step_motor(object):
 
 	def arm_backward(self,deg):
 		self.arm_move(self.arm_degrees(deg), direction=CCW)
+
+class Sonar(object):
+	def __init__(self,pin_echo,pin_trigger):
+		""" Initialize the sonar. Input echo and trigger pins."""
+		self.echo=pin_echo
+		self.trigger=pin_trigger
+		
+
+	def distance_cm=self.distance()
 
 
 ##### OBJECTS
@@ -128,28 +137,7 @@ def threaded_webserver():
 
 @app.route('/')
 def index():
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>SAAS</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512- q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous">></script>
-    </head>
-    <body>
-        <h1>Smart Automatiseret AffaldsSortering</h1>
-        <h2>Software As A Service</h2>
-        <h3>Waste detection</h3>
-        <p>Object: <span id="obj_det">Waiting for object</span></p>
-        <script type="text/javascript">
-            var socket = io();
-            socket.on('detected_object', function(received_data) {
-                document.getElementById('obj_det').innerText = received_data;
-            });
-        </script>
-    </body>
-    </html>
-    """
+    return # Opdater til at bruge index.html
 
 
 ##### PROGRAM

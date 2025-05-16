@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <title>SAAS</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+            integrity="sha512- q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+            crossorigin="anonymous">></script>
+            <script type="text/javascript">
+            var socket = io();
+            // Last detected waste type
+            socket.on('detected_object', function (received_data) {
+                document.getElementById('obj_det').innerText = received_data;
+            });
+            // Database updated, update graph
+            socket.on('database_updated', function (received_chart_bar) {
+                document.getElementById('db_updated').src = 'data:image/png;base64,' + received_chart_bar;
+            });
+            // Total amount of waste sorted updated, update website
+            socket.on('amount_updated', function (received_amount) {
+                document.getElementById('total_amount').innerText = received_amount;
+            });
+        </script>
+    </head>
+
+    <body>
+        
+        <h1>Smart Automatiseret AffaldsSortering</h1>
+        <h2>Software As A Service</h2>
+        <h3>Waste detection amount:  <span id="total_amount">Waiting for amount</span></h3>
+        <p>Object: <span id="obj_det">Waiting for object</span></p>
+        </br>
+        <img id="db_updated" class="img-fluid float-left" src='data:image/png;base64,{{render_chart_bar}}' />
+        <img class="img-fluid float-right" src='data:image/png;base64,{{data}}' />
+    </body>
+
+</html>
