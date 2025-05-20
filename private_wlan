@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo nmcli device wifi hotspot ssid pi5wlan password pi5wlanpassword # Defaults to 10.42.0.1/24

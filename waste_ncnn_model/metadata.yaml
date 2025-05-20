@@ -1,0 +1,23 @@
+description: Ultralytics waste model trained on /content/waste-classification-new-1/data.yaml
+author: Ultralytics
+date: '2025-05-20T11:36:03.869798'
+version: 8.3.140
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 800
+- 800
+names:
+  0: BIODEGRADABLE
+  1: CARDBOARD
+  2: GLASS
+  3: METAL
+  4: PAPER
+  5: PLASTIC
+args:
+  batch: 1
+  half: false
+channels: 3
