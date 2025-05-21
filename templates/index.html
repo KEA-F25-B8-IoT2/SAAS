@@ -33,10 +33,13 @@
         <h1>Smart Automatiseret AffaldsSortering</h1>
         <h2>Software As A Service</h2>
         <h3>Waste detection amount: <span id="total_amount">Waiting for amount</span></h3>
-        <p>Object: <span id="obj_det">Waiting for object</span></p>
+        <h3>Object: <span id="obj_det">Waiting for object</span></h3>
+        <p>Last time a detection occured: <span id="obj_det_time">Work in progress // Waiting for timestamp</span></p>
         </br>
-        <img id="db_updated" class="img-fluid float-left" src='data:image/png;base64,{{render_chart_bar}}' />
-        <img id="line_chart" class="img-fluid float-right" src='data:image/png;base64,{{render_chart_line}}' />
+        <img id="bin_fill" class="img-fluid" src='data:image/png;base64,{{render_chart_bin}}' /> <!-- {{render_chart_bin}} has to match what's being returned in the render_template() in app.py -->
+        </br>
+        <img id="db_updated" class="img-fluid float-left" src='data:image/png;base64,{{render_chart_bar}}' /> <!-- {{render_chart_bar}} has to match what's being returned in the render_template() in app.py -->
+        <img id="line_chart" class="img-fluid float-right" src='data:image/png;base64,{{render_chart_line}}' /> <!-- {{render_chart_line}} has to match what's being returned in the render_template() in app.py -->
     </body>
 
 </html>

@@ -1,6 +1,8 @@
+##########################################################################################
 """
-The main python script for waste detection, analyzation and sorting.
+THE FOLLOWING SECTION IS FOR IMPORTS
 """
+##########################################################################################
 
 ##### IMPORTS
 import threading
@@ -20,7 +22,12 @@ from flask_socketio import SocketIO, emit
 
 from gpiozero import PWMLED, OutputDevice, DistanceSensor
 
-##### VARS AND CONTS
+##########################################################################################
+"""
+THE FOLLOWING SECTION IS FOR HARDWARE RELATED FUNCTIONS AND VAR/CONSTS
+"""
+##########################################################################################
+
 # PINS
 PIN_MOTOR_BELT = 10 
 
@@ -71,11 +78,9 @@ CCW = -1 # Counter clockwise rotation
 
 # VARS
 
-arm_activated=False # Is a sorting arm activated? Defaults to False
-arm_default_position=True # "unobstructing" default position
+# arm_activated=False # Is a sorting arm activated? Defaults to False
+# arm_default_position=True # "unobstructing" default position
 
-
-##### CONFIGURATIONS
 class step_motor(object):
 	def __init__(self, pin_1, pin_2, pin_3, pin_4):
 		"""Initialize stepper motor. Input the 4 pins."""
@@ -118,6 +123,11 @@ class Sonar(DistanceSensor):
 		""" Sonar defaults to return distance in m. Convert this to cm."""
 		return self.distance*100 # .distance is a constantly updating attribute, and not a function that should be called.
 
+def conv_start():
+	MOTOR_BELT.value=0.6
+
+def conv_stop():
+	MOTOR_BELT.off()
 
 ##### OBJECTS
 MOTOR_BELT=PWMLED(PIN_MOTOR_BELT) # Create instance, and make sure it's off.
@@ -136,15 +146,16 @@ picam2 = Picamera2() # Instantiate
 picam2.preview_configuration.main.format = "RGB888" # Set format
 picam2.start() # Start camera
 model= YOLO("waste.pt")
+
+
+##########################################################################################
+"""
+THE FOLLOWING SECTION IS FOR FLASK AND SOCKETIO RELATED FUNCTIONS AND VAR/CONSTS
+"""
+##########################################################################################
+
 app=Flask(__name__)
 socketio=SocketIO(app)
-
-##### FUNCTIONS
-def conv_start():
-	MOTOR_BELT.value=0.6
-
-def conv_stop():
-	MOTOR_BELT.off()
 
 def threaded_webserver():
 	socketio.run(app,host='0.0.0.0',port=44380)
@@ -174,29 +185,6 @@ def chart_bar():
     chart_bar=base64.b64encode(buf.getbuffer()).decode("ascii")
     return chart_bar # Return chart for later use
 
-def fetch_db(table):
-    con=Connection('waste_sorting.db')
-    cur=con.cursor()
-    # Get current time minus 48 hours
-    cutoff_date = (datetime.now() - timedelta(hours=48)).strftime('%d-%m-%Y %H:%M:%S')
-    sql=f"""
-    SELECT 
-        substr(timestamp, 12, 2) as hour,
-        count(rowid) as count
-    FROM 
-        {table}
-    WHERE 
-        timestamp >= ?
-    GROUP BY 
-        substr(timestamp, 12, 2)
-    ORDER BY 
-        hour
-    """
-    cur.execute(sql, (cutoff_date,))
-    result=cur.fetchall()
-    con.close()
-    return result
-
 def chart_line():
 	fig = Figure() 
 	ax = fig.subplots()# tilader flere plots i samme figur 
@@ -223,11 +211,11 @@ def chart_line():
 		xd.append(item[1])
 	# ax.set_facecolor("#000") # inner plot background color HTML black 
 	# fig.patch.set_facecolor('#000') # outer plot background color HTML black 
-	ax.plot(ya,xa, label="leftover")
-	ax.plot(yb,xb,label="cardboard")
-	ax.plot(yc,xc,label="plastic")
-	ax.plot(yd,xd,label="paper")
-	ax.set_xlabel('Hour of the day') 
+	ax.plot(ya,xa, label="leftover",color="#2ecc71")
+	ax.plot(yb,xb,label="cardboard",color='#3498db')
+	ax.plot(yd,xd,label="paper",color="#9b59b6")
+	ax.plot(yc,xc,label="plastic",color="#e74c3c")
+	ax.set_xlabel('Hour of the day, past 48 hrs') 
 	ax.set_ylabel('Pieces of waste sorted by hour') 
 	fig.legend()
 	buf = BytesIO() 
@@ -235,24 +223,15 @@ def chart_line():
 	data = base64.b64encode(buf.getbuffer()).decode("ascii") 
 	return data
 
-# def db_updated_socketio():
-#     render_chart_bar=chart_bar()
-#     socketio.emit('database_updated', render_chart_bar) # Emit socketio/flask to update chart bar
-
-def db_select_last_rowid(specified_table):
-    con=Connection('waste_sorting.db') # Connect to DB
-    cur=con.cursor()
-    sql=f"""SELECT rowid from {specified_table} ORDER BY rowid DESC LIMIT 1""" # Get "total amount of trash for this category" by fetching last rowid from desired table
-    cur.execute(sql) # Run sql-command
-    list_id=cur.fetchall() # Fetch from SQL-query
-    tuple_id=list_id[0] # Convert from single-item list-nested tuple, to single-item tuple
-    total_id, *useless = tuple_id # Convert tuple to single item, and pack rest into useless-variable
-    con.close()
-    return int(total_id) # Make sure total_id is int for future use
-
 @app.route('/') # One page website.
 def index():
     return render_template('index.html',render_chart_bar=chart_bar(), render_chart_line=chart_line()) # Start website with bar chart.
+
+##########################################################################################
+"""
+THE FOLLOWING SECTION IS FOR DATABASE RELATED FUNCTIONS AND VAR/CONSTS
+"""
+##########################################################################################
 
 def db_insert(specified_table):
 	con=Connection('waste_sorting.db')
@@ -265,11 +244,51 @@ def db_insert(specified_table):
 	socketio.emit('database_updated', chart_bar())
 	socketio.emit('line_update', chart_line())
 
+def fetch_db(table):
+    con=Connection('waste_sorting.db')
+    cur=con.cursor()
+    # Get current time minus 48 hours
+    cutoff_date = (datetime.now() - timedelta(hours=48)).strftime('%d-%m-%Y %H:%M:%S')
+    sql=f"""
+    SELECT 
+        substr(timestamp, 12, 2) as hour,
+        count(rowid) as count
+    FROM 
+        {table}
+    WHERE 
+        timestamp >= ?
+    GROUP BY 
+        substr(timestamp, 12, 2)
+    ORDER BY 
+        hour
+    """
+    cur.execute(sql, (cutoff_date,))
+    result=cur.fetchall()
+    con.close()
+    return result
+
+
+def db_select_last_rowid(specified_table):
+    con=Connection('waste_sorting.db') # Connect to DB
+    cur=con.cursor()
+    sql=f"""SELECT rowid from {specified_table} ORDER BY rowid DESC LIMIT 1""" # Get "total amount of trash for this category" by fetching last rowid from desired table
+    cur.execute(sql) # Run sql-command
+    list_id=cur.fetchall() # Fetch from SQL-query
+    tuple_id=list_id[0] # Convert from single-item list-nested tuple, to single-item tuple
+    total_id, *useless = tuple_id # Convert tuple to single item, and pack rest into useless-variable
+    con.close()
+    return int(total_id) # Make sure total_id is int for future use
+
+
 def total_amount_socketio():
     total=db_select_last_rowid('leftover')+db_select_last_rowid('cardboard')+db_select_last_rowid('paper')+db_select_last_rowid('plastic')
     socketio.emit('amount_updated',total)
 
-##### PROGRAM
+##########################################################################################
+"""
+THE FOLLOWING SECTION IS FOR THE MAIN FUNCTIONALITY OF THE PROTOTYPE
+"""
+##########################################################################################
 def main(): # Main program
 	# global arm_activated, arm_default_position # Make sure variables are usable ## Is this useful or just clutter?
 	web_server = threading.Thread(target=threaded_webserver, daemon=True).start() # Start webserver as a background thread. 'daemon' makes sure the thread shuts down when main script shuts down.
