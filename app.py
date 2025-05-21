@@ -8,12 +8,12 @@ import base64
 import traceback
 
 from time import sleep
-from datetime import datetime
 from ultralytics import YOLO
 from sqlite3 import Connection
 from io import BytesIO
 from matplotlib.figure import Figure
 
+from datetime import datetime, timedelta
 from picamera2 import Picamera2, Preview
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
@@ -174,9 +174,70 @@ def chart_bar():
     chart_bar=base64.b64encode(buf.getbuffer()).decode("ascii")
     return chart_bar # Return chart for later use
 
-def db_updated_socketio():
-    render_chart_bar=chart_bar()
-    socketio.emit('database_updated', render_chart_bar) # Emit socketio/flask to update chart bar
+def fetch_db(table):
+    con=Connection('waste_sorting.db')
+    cur=con.cursor()
+    # Get current time minus 48 hours
+    cutoff_date = (datetime.now() - timedelta(hours=48)).strftime('%d-%m-%Y %H:%M:%S')
+    sql=f"""
+    SELECT 
+        substr(timestamp, 12, 2) as hour,
+        count(rowid) as count
+    FROM 
+        {table}
+    WHERE 
+        timestamp >= ?
+    GROUP BY 
+        substr(timestamp, 12, 2)
+    ORDER BY 
+        hour
+    """
+    cur.execute(sql, (cutoff_date,))
+    result=cur.fetchall()
+    con.close()
+    return result
+
+def chart_line():
+	fig = Figure() 
+	ax = fig.subplots()# tilader flere plots i samme figur 
+
+	ya=[]
+	xa=[]
+	for item in fetch_db('leftover'):
+		ya.append(item[0])
+		xa.append(item[1])
+	yb=[]
+	xb=[]
+	for item in fetch_db('cardboard'):
+		yb.append(item[0])
+		xb.append(item[1])
+	yc=[]
+	xc=[]
+	for item in fetch_db('plastic'):
+		yc.append(item[0])
+		xc.append(item[1])
+	yd=[]
+	xd=[]
+	for item in fetch_db('paper'):
+		yd.append(item[0])
+		xd.append(item[1])
+	# ax.set_facecolor("#000") # inner plot background color HTML black 
+	# fig.patch.set_facecolor('#000') # outer plot background color HTML black 
+	ax.plot(ya,xa, label="leftover")
+	ax.plot(yb,xb,label="cardboard")
+	ax.plot(yc,xc,label="plastic")
+	ax.plot(yd,xd,label="paper")
+	ax.set_xlabel('Hour of the day') 
+	ax.set_ylabel('Pieces of waste sorted by hour') 
+	fig.legend()
+	buf = BytesIO() 
+	fig.savefig(buf, format="png") # Embed the result in the html output. 
+	data = base64.b64encode(buf.getbuffer()).decode("ascii") 
+	return data
+
+# def db_updated_socketio():
+#     render_chart_bar=chart_bar()
+#     socketio.emit('database_updated', render_chart_bar) # Emit socketio/flask to update chart bar
 
 def db_select_last_rowid(specified_table):
     con=Connection('waste_sorting.db') # Connect to DB
@@ -191,17 +252,18 @@ def db_select_last_rowid(specified_table):
 
 @app.route('/') # One page website.
 def index():
-    return render_template('index.html',render_chart_bar=chart_bar()) # Start website with bar chart.
+    return render_template('index.html',render_chart_bar=chart_bar(), render_chart_line=chart_line()) # Start website with bar chart.
 
 def db_insert(specified_table):
-    con=Connection('waste_sorting.db')
-    cur=con.cursor()
-    timestamp=f"{datetime.now().strftime('%d-%m-%Y %H:%M:%S')}" # Get formatted timestamp
-    sql=f"""INSERT INTO {specified_table}(timestamp)VALUES(?)"""
-    cur.execute(sql,(timestamp,)) # Single item tuple needed or execute() will throw an error
-    con.commit()
-    con.close()
-    db_updated_socketio() # Emit to socketio that the db has been updated
+	con=Connection('waste_sorting.db')
+	cur=con.cursor()
+	timestamp=f"{datetime.now().strftime('%d-%m-%Y %H:%M:%S')}" # Get formatted timestamp
+	sql=f"""INSERT INTO {specified_table}(timestamp)VALUES(?)"""
+	cur.execute(sql,(timestamp,)) # Single item tuple needed or execute() will throw an error
+	con.commit()
+	con.close()
+	socketio.emit('database_updated', chart_bar())
+	socketio.emit('line_update', chart_line())
 
 def total_amount_socketio():
     total=db_select_last_rowid('leftover')+db_select_last_rowid('cardboard')+db_select_last_rowid('paper')+db_select_last_rowid('plastic')
@@ -217,44 +279,42 @@ def main(): # Main program
 		r=results[0] # save results
 		s=r.summary() # Summarise results
 		if s: # Only engage if something is detected. Avoids list index error.
-			for res in s: # Engage for every detected object
-				print(res['name'])
-				socketio.emit('detected_object', res['name'])
-				total_amount_socketio()
-				if res['name'] not in ['cardboard', 'paper', 'plastic']:
-					print(res['name']," inserted into db")
-					# SONAR_LEFTOVER_START=SONAR_LEFTOVER.distance_cm() # Check current waste height in bin
-					db_insert('leftover') # Send timestamp to database for new deposit
-					# conv_start() # Enable conveyer belt
-					# if SONAR_LEFTOVER_START-SONAR_LEFTOVER.distance_cm()>=5: # If height of waste is increased by 5cm or more
-					# 	conv_stop() # Disable conveyer belt
-				else:
-					db_insert(res['name'])
-					# print(f"{res['name']} amount: {db_select_last_rowid(res['name'])}")
-					if res['name']=='cardboard':
-						print(res['name']," inserted into db")
-						# SONAR_CARDBOARD_START=SONAR_CARDBOARD.distance_cm()
-						# ARM_CARDBOARD.forward()
-						# conv_start()
-						# if SONAR_CARDBOARD_START-SONAR_CARDBOARD.distance_cm()>=5:
-						# 	conv_stop()
-						# 	ARM_CARDBOARD.backward()
-					if res['name']=='paper':
-						print(res['name']," inserted into db")
-						# SONAR_PAPER_START=SONAR_PAPER.distance_cm()
-						# ARM_PAPER.forward()
-						# conv_start()
-						# if SONAR_PAPER_START-SONAR_PAPER.distance_cm()>=5:
-						# 	conv_stop
-						# 	ARM_PAPER.backward()
-					if res['name']=='plastic':
-						print(res['name']," inserted into db")
-						# SONAR_PLASTIC_START=SONAR_PLASTIC.distance_cm()
-						# ARM_PLASTIC.forward()
-						# conv_start()
-						# if SONAR_PLASTIC_START-SONAR_PLASTIC.distance_cm()>=5:
-						# 	conv_stop()
-						# 	ARM_PLASTIC.backward()
+			detected_object=s[0]['name'].lower() # Avoids saving multiple detections, only save lowercase name of the first-detected object of each capture
+			total_amount_socketio()
+			if detected_object not in ['cardboard', 'paper', 'plastic']:
+				# SONAR_LEFTOVER_START=SONAR_LEFTOVER.distance_cm() # Check current waste height in bin
+				db_insert('leftover') # Send timestamp to database for new deposit
+				socketio.emit('detected_object', 'leftover')
+				print(detected_object," inserted into db")
+				# conv_start() # Enable conveyer belt
+				# if SONAR_LEFTOVER_START-SONAR_LEFTOVER.distance_cm()>=5: # If height of waste is increased by 5cm or more
+				# 	conv_stop() # Disable conveyer belt
+			else:
+				db_insert(detected_object)
+				socketio.emit('detected_object', detected_object)
+				print(detected_object," inserted into db")
+				# print(f"{res['name']} amount: {db_select_last_rowid(res['name'])}")
+				# if detected_object=='cardboard':
+					# SONAR_CARDBOARD_START=SONAR_CARDBOARD.distance_cm()
+					# ARM_CARDBOARD.forward()
+					# conv_start()
+					# if SONAR_CARDBOARD_START-SONAR_CARDBOARD.distance_cm()>=5:
+					# 	conv_stop()
+					# 	ARM_CARDBOARD.backward()
+				# if detected_object=='paper':
+					# SONAR_PAPER_START=SONAR_PAPER.distance_cm()
+					# ARM_PAPER.forward()
+					# conv_start()
+					# if SONAR_PAPER_START-SONAR_PAPER.distance_cm()>=5:
+					# 	conv_stop
+					# 	ARM_PAPER.backward()
+				# if detected_object=='plastic':
+					# SONAR_PLASTIC_START=SONAR_PLASTIC.distance_cm()
+					# ARM_PLASTIC.forward()
+					# conv_start()
+					# if SONAR_PLASTIC_START-SONAR_PLASTIC.distance_cm()>=5:
+					# 	conv_stop()
+					# 	ARM_PLASTIC.backward()
 		sleep(3) # Sleep 3 seconds before analysing live-view again
 
 
