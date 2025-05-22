@@ -223,10 +223,10 @@ def chart_line():
 	graph = base64.b64encode(buf.getbuffer()).decode("ascii") 
 	return graph
 
-def chart_bin():
-	""" Adapt this to the bin fill level when it's up and running. """
-	graph = base64.b64encode(buf.getbuffer()).decode("ascii") 
-	return graph
+# def chart_bin():
+# 	""" Adapt this to the bin fill level when it's up and running. """
+# 	graph = base64.b64encode(buf.getbuffer()).decode("ascii") 
+# 	return graph
 
 @app.route('/') # One page website.
 def index():
@@ -296,7 +296,8 @@ THE FOLLOWING SECTION IS FOR THE MAIN FUNCTIONALITY OF THE PROTOTYPE
 ##########################################################################################
 def main(): # Main program
 	# global arm_activated, arm_default_position # Make sure variables are usable ## Is this useful or just clutter?
-	web_server = threading.Thread(target=threaded_webserver, daemon=True).start() # Start webserver as a background thread. 'daemon' makes sure the thread shuts down when main script shuts down.
+	web_server = threading.Thread(target=threaded_webserver, daemon=True).start() 
+	# Start webserver as a background thread. 'daemon' makes sure the thread shuts down when main script shuts down.
 	while True:
 		frame=picam2.capture_array() # Capture pic
 		results=model.predict(frame, conf=0.2, iou=0.3) # analyze
