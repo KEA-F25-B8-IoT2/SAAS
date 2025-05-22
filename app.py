@@ -170,7 +170,6 @@ def chart_bar():
     x=['leftover','cardboard','paper','plastic'] # Create x-axis for graph
     y=[amounts[0],amounts[1],amounts[2],amounts[3]] # Create y-axis for graph
     bars=ax.bar(x,y,color=['#2ecc71', '#3498db', '#9b59b6', '#e74c3c']) # Create and colorise bars in graph
-    ax.tick_params(axis='x',which='both',rotation=30) # Is this necessary?
     ax.set_xlabel("Waste type")
     ax.set_ylabel("Pieces of waste")
     ax.set_title("Waste sorting")
@@ -187,46 +186,40 @@ def chart_bar():
 
 def chart_line():
 	fig = Figure() 
-	ax = fig.subplots()# tilader flere plots i samme figur 
+	ax = fig.subplots() # Several plots in the same figure
+	data = {
+		'leftover': {'hours': [], 'counts':[]},
+		'cardboard': {'hours': [], 'counts': []},
+		'paper':{'hours': [], 'counts': []},
+		'plastic': {'hours': [], 'counts': []}
+	} # Create dict to store data
+	for waste_type in data: #
+		data[waste_type]['hours'] = list(range(24))
+		data[waste_type]['counts']=[0]*24
 
-	ya=[]
-	xa=[]
-	for item in fetch_db('leftover'):
-		ya.append(item[0])
-		xa.append(item[1])
-	yb=[]
-	xb=[]
-	for item in fetch_db('cardboard'):
-		yb.append(item[0])
-		xb.append(item[1])
-	yc=[]
-	xc=[]
-	for item in fetch_db('plastic'):
-		yc.append(item[0])
-		xc.append(item[1])
-	yd=[]
-	xd=[]
-	for item in fetch_db('paper'):
-		yd.append(item[0])
-		xd.append(item[1])
-	# ax.set_facecolor("#000") # inner plot background color HTML black 
-	# fig.patch.set_facecolor('#000') # outer plot background color HTML black 
-	ax.plot(ya,xa, label="leftover",color="#2ecc71")
-	ax.plot(yb,xb,label="cardboard",color='#3498db')
-	ax.plot(yd,xd,label="paper",color="#9b59b6")
-	ax.plot(yc,xc,label="plastic",color="#e74c3c")
-	ax.set_xlabel('Hour of the day, past 48 hrs') 
-	ax.set_ylabel('Pieces of waste sorted by hour') 
-	fig.legend()
+	for waste_type in data: # Fetch data from db and insert 
+		for hour, count in fetch_db(waste_type):
+			hour_int=int(hour) # Make sure hour is integer. Otherwise it won't woooork.
+			data[waste_type]['counts'][hour_int]=count
+
+	# Create the graphs with sorted hours, from 0-24.
+	ax.plot(data['leftover']['hours'], data['leftover']['counts'], label="leftover", color="#2ecc71")
+	ax.plot(data['cardboard']['hours'], data['cardboard']['counts'], label="cardboard", color="#3498db")
+	ax.plot(data['paper']['hours'], data['paper']['counts'], label="paper", color="#9b59b6")
+	ax.plot(data['plastic']['hours'], data['plastic']['counts'], label="plastic", color="#e74c3c")
+	ax.set_xticks(range(24)) # Show all hours on the graph bottom.
+	ax.set_xlabel('Hour of the day, past 48 hrs') # X-label
+	ax.set_ylabel('Pieces of waste sorted by hour') # Y-label
+	fig.legend() # Show colors of lines and their waste types
 	buf = BytesIO() 
 	fig.savefig(buf, format="png") # Embed the result in the html output. 
 	graph = base64.b64encode(buf.getbuffer()).decode("ascii") 
 	return graph
 
-# def chart_bin():
-# 	""" Adapt this to the bin fill level when it's up and running. """
-# 	graph = base64.b64encode(buf.getbuffer()).decode("ascii") 
-# 	return graph
+def chart_bin():
+	""" Adapt this to the bin fill level when it's up and running. """
+	graph = base64.b64encode(buf.getbuffer()).decode("ascii") 
+	return graph
 
 @app.route('/') # One page website.
 def index():
@@ -296,16 +289,16 @@ THE FOLLOWING SECTION IS FOR THE MAIN FUNCTIONALITY OF THE PROTOTYPE
 ##########################################################################################
 def main(): # Main program
 	# global arm_activated, arm_default_position # Make sure variables are usable ## Is this useful or just clutter?
-	web_server = threading.Thread(target=threaded_webserver, daemon=True).start() 
-	# Start webserver as a background thread. 'daemon' makes sure the thread shuts down when main script shuts down.
+	web_server = threading.Thread(target=threaded_webserver, daemon=True).start() # Start webserver as a background thread. 'daemon' makes sure the thread shuts down when main script shuts down.
 	while True:
 		frame=picam2.capture_array() # Capture pic
-		results=model.predict(frame, conf=0.2, iou=0.3) # analyze
+		results=model.predict(frame, conf=0.5, iou=0.3) # analyze
+		# Conf 0.5-0.7 is usually good enough for initial phases and testing. Hence we don't want anything if the model is not at least 0.5 confident.
 		r=results[0] # save results
 		s=r.summary() # Summarise results
 		if s: # Only engage if something is detected. Avoids list index error.
+			print(s)
 			detected_object=s[0]['name'].lower() # Avoids saving multiple detections, only save lowercase name of the first-detected object of each capture
-			print(s[0]['conf'])
 			total_amount_socketio()
 			if detected_object not in ['cardboard', 'paper', 'plastic']:
 				# SONAR_LEFTOVER_START=SONAR_LEFTOVER.distance_cm() # Check current waste height in bin
