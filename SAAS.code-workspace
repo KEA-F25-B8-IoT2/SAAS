@@ -2,10 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"name": "SSH FS - malipi",
-			"uri": "ssh://malipi/home/malipi/Desktop"
 		}
 	],
 	"settings": {

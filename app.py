@@ -182,8 +182,8 @@ def chart_bar():
         line.remove() # Remove ugly blue line from the "usual" graph.
     buf=BytesIO()
     fig.savefig(buf,format="png")
-    chart_bar=base64.b64encode(buf.getbuffer()).decode("ascii")
-    return chart_bar # Return chart for later use
+    graph=base64.b64encode(buf.getbuffer()).decode("ascii")
+    return graph # Return chart for later use
 
 def chart_line():
 	fig = Figure() 
@@ -220,8 +220,13 @@ def chart_line():
 	fig.legend()
 	buf = BytesIO() 
 	fig.savefig(buf, format="png") # Embed the result in the html output. 
-	data = base64.b64encode(buf.getbuffer()).decode("ascii") 
-	return data
+	graph = base64.b64encode(buf.getbuffer()).decode("ascii") 
+	return graph
+
+def chart_bin():
+	""" Adapt this to the bin fill level when it's up and running. """
+	graph = base64.b64encode(buf.getbuffer()).decode("ascii") 
+	return graph
 
 @app.route('/') # One page website.
 def index():
