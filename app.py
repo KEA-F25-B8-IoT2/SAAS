@@ -305,6 +305,7 @@ def main(): # Main program
 		s=r.summary() # Summarise results
 		if s: # Only engage if something is detected. Avoids list index error.
 			detected_object=s[0]['name'].lower() # Avoids saving multiple detections, only save lowercase name of the first-detected object of each capture
+			print(s[0]['conf'])
 			total_amount_socketio()
 			if detected_object not in ['cardboard', 'paper', 'plastic']:
 				# SONAR_LEFTOVER_START=SONAR_LEFTOVER.distance_cm() # Check current waste height in bin
