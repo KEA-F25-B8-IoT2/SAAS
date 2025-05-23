@@ -292,7 +292,7 @@ def main(): # Main program
 	web_server = threading.Thread(target=threaded_webserver, daemon=True).start() # Start webserver as a background thread. 'daemon' makes sure the thread shuts down when main script shuts down.
 	while True:
 		frame=picam2.capture_array() # Capture pic
-		results=model.predict(frame, conf=0.5, iou=0.3) # analyze
+		results=model.predict(frame, conf=0.55, iou=0.3) # analyze
 		# Conf 0.5-0.7 is usually good enough for initial phases and testing. Hence we don't want anything if the model is not at least 0.5 confident.
 		r=results[0] # save results
 		s=r.summary() # Summarise results
